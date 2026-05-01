@@ -1,0 +1,13 @@
+{
+  "name": "Flux: Creator Social",
+  "description": "A next-generation social platform for creators to share, remix, and collaborate in real-time.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "Firebase",
+    "AI-Powered Remixing",
+    "Real-time Collaboration"
+  ]
+}

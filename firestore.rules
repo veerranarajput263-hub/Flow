@@ -1,0 +1,71 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // User profiles
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId)
+        && incoming().keys().hasAll(['displayName', 'photoURL'])
+        && incoming().displayName is string
+        && incoming().displayName.size() <= 50;
+      allow update: if isOwner(userId)
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'bio', 'followersCount', 'followingCount']);
+    }
+
+    // Posts
+    match /posts/{postId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && isOwner(incoming().creatorId)
+        && incoming().type in ['image', 'video', 'audio', 'code']
+        && incoming().createdAt == request.time;
+      allow update: if isSignedIn() && (
+        // Owner updates (title, desc, tags)
+        (isOwner(existing().creatorId) && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'description', 'tags']))
+        ||
+        // Others updating counts (atomicity would be better with existsAfter but simple increment for now)
+        (incoming().diff(existing()).affectedKeys().hasAny(['likesCount', 'remixCount', 'forkCount']))
+      );
+      allow delete: if isOwner(existing().creatorId);
+
+      // Remixes as subcollection (though blueprint shows /posts/{postId}/remixes/{remixId})
+      match /remixes/{remixId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn() && isOwner(incoming().remixerId);
+      }
+    }
+
+    // Likes
+    match /likes/{likeId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isOwner(incoming().userId);
+      allow delete: if isSignedIn() && isOwner(existing().userId);
+    }
+  }
+}

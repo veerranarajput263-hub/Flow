@@ -1,0 +1,81 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account details and stats.",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "bio": { "type": "string" },
+        "followersCount": { "type": "integer" },
+        "followingCount": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["displayName", "photoURL"]
+    },
+    "Post": {
+      "title": "Creator Post",
+      "description": "A post containing multimedia or code snippets.",
+      "type": "object",
+      "properties": {
+        "creatorId": { "type": "string" },
+        "creatorName": { "type": "string" },
+        "creatorPhoto": { "type": "string" },
+        "type": { "type": "string", "enum": ["image", "video", "audio", "code"] },
+        "contentUrl": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "prompt": { "type": "string", "description": "The prompt used to generate this asset (if AI-generated)." },
+        "likesCount": { "type": "integer" },
+        "remixCount": { "type": "integer" },
+        "forkCount": { "type": "integer" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["creatorId", "type", "createdAt"]
+    },
+    "Remix": {
+      "title": "Post Remix",
+      "description": "A remix of an existing post.",
+      "type": "object",
+      "properties": {
+        "originalPostId": { "type": "string" },
+        "remixerId": { "type": "string" },
+        "type": { "type": "string" },
+        "contentUrl": { "type": "string" },
+        "promptVariation": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["originalPostId", "remixerId", "createdAt"]
+    },
+    "Like": {
+      "title": "Post Like",
+      "description": "Indicates a user liked a post.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "postId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles by UID."
+    },
+    "/posts/{postId}": {
+      "schema": "Post",
+      "description": "Main feed of creator posts."
+    },
+    "/posts/{postId}/remixes/{remixId}": {
+      "schema": "Remix",
+      "description": "Remixes associated with a specific post."
+    },
+    "/likes/{likeId}": {
+      "schema": "Like",
+      "description": "Likes relationship (document ID often userId_postId)."
+    }
+  }
+}
